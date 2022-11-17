@@ -114,6 +114,8 @@
 		F785CE3C2916C18300CDCE32 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F785CDCE2916C18300CDCE32 /* SceneDelegate.swift */; };
 		F785CE3D2916C18300CDCE32 /* Podfile in Resources */ = {isa = PBXBuildFile; fileRef = F785CDCF2916C18300CDCE32 /* Podfile */; };
 		F785CE3E2916C18300CDCE32 /* Podfile.lock in Resources */ = {isa = PBXBuildFile; fileRef = F785CDD02916C18300CDCE32 /* Podfile.lock */; };
+		F78EEBDE29263F9300418F05 /* heroesOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F78EEBDD29263F9300418F05 /* heroesOptions.swift */; };
+		F78EEBE529264BB000418F05 /* CollectionViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = F78EEBE429264BB000418F05 /* CollectionViewCell.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -300,6 +302,8 @@
 		F785CDCF2916C18300CDCE32 /* Podfile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Podfile; sourceTree = "<group>"; };
 		F785CDD02916C18300CDCE32 /* Podfile.lock */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Podfile.lock; sourceTree = "<group>"; };
 		F785CDE02916C18300CDCE32 /* marvel_logo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = marvel_logo.png; path = "../../../Downloads/effectiveIOS-feature-lab1/marvel111/Assets.xcassets/marvel_logo.imageset/marvel_logo.png"; sourceTree = "<group>"; };
+		F78EEBDD29263F9300418F05 /* heroesOptions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = heroesOptions.swift; sourceTree = "<group>"; };
+		F78EEBE429264BB000418F05 /* CollectionViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectionViewCell.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -382,11 +386,13 @@
 				F74BC114290AFF8200EA7DA4 /* AppDelegate.swift */,
 				F74BC116290AFF8200EA7DA4 /* SceneDelegate.swift */,
 				F74BC118290AFF8200EA7DA4 /* ViewController.swift */,
+				F78EEBE429264BB000418F05 /* CollectionViewCell.swift */,
 				F74BC11A290AFF8200EA7DA4 /* Main.storyboard */,
 				F74BC11D290AFF8300EA7DA4 /* Assets.xcassets */,
 				F74BC11F290AFF8300EA7DA4 /* LaunchScreen.storyboard */,
 				F74BC122290AFF8300EA7DA4 /* Info.plist */,
 				F7209BBB2912E199008DFAD8 /* PagingCollectionViewLayout.swift */,
+				F78EEBDD29263F9300418F05 /* heroesOptions.swift */,
 			);
 			path = Marvel;
 			sourceTree = "<group>";
@@ -998,6 +1004,8 @@
 			files = (
 				F7209BBC2912E199008DFAD8 /* PagingCollectionViewLayout.swift in Sources */,
 				F74BC119290AFF8200EA7DA4 /* ViewController.swift in Sources */,
+				F78EEBE529264BB000418F05 /* CollectionViewCell.swift in Sources */,
+				F78EEBDE29263F9300418F05 /* heroesOptions.swift in Sources */,
 				F74BC115290AFF8200EA7DA4 /* AppDelegate.swift in Sources */,
 				F74BC117290AFF8200EA7DA4 /* SceneDelegate.swift in Sources */,
 			);

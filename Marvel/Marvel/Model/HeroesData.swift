@@ -6,13 +6,15 @@
 //
 
 import UIKit
-let heroes = [heroesOptions(name: "Deadpool", image:UIImage(named: "deadpool"), color: .red),
-              heroesOptions(name: "Iron Man",  image: UIImage(named: "Iron_man"), color: .yellow),
-              heroesOptions(name: "Spider man", image: UIImage(named: "spider_man"), color: .blue),
-              heroesOptions(name: "Thanos", image: UIImage(named: "Thanos"), color: .purple)]
-func get(_ index: Int) -> heroesOptions {
-       return heroes[index]
-   }
-   func count() -> Int {
-       return heroes.count
-   }
+struct HeroData{
+    let heroData = [HeroModel(name: "Deadpool", imageLink:URL(string: "https://github.com/gresaid/MarvelApp/blob/develop/Marvel/Marvel/Assets.xcassets/deadpool.imageset/deadpool.png?raw=true"), color: .red),
+                    HeroModel(name: "Iron Man",  imageLink:URL(string: "https://github.com/gresaid/MarvelApp/blob/develop/Marvel/Marvel/Assets.xcassets/Iron_man.imageset/Iron_man.png?raw=true"), color: .yellow),
+                    HeroModel(name: "Spider man", imageLink:URL(string: "https://github.com/gresaid/MarvelApp/blob/develop/Marvel/Marvel/Assets.xcassets/spider_man.imageset/spider_man.png?raw=true"), color: .blue),
+                    HeroModel(name: "Thanos", imageLink: URL(string: "https://github.com/gresaid/MarvelApp/blob/develop/Marvel/Marvel/Assets.xcassets/Thanos.imageset/Thanos.png?raw=true"), color: .purple)]
+    func get(_ index: Int) -> HeroModel {
+        return heroData[index]
+    }
+    func count() -> Int {
+        return heroData.count
+    }
+}

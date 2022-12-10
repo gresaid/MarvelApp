@@ -14,7 +14,6 @@ final class BackgroundView: UIImageView {
     override init(frame: CGRect) {
         super.init(frame: frame)
         self.backgroundColor = UIColor(red: 42/255, green: 39/255, blue: 43/255, alpha: 1.0)
-        setTriangleColor(heroes[3].color)
     }
     
     required init?(coder: NSCoder) {

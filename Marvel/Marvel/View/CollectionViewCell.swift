@@ -9,13 +9,16 @@ import UIKit
 class CollectionViewCell: UICollectionViewCell{
     func set(heroData: HeroModel, and tag: Int){
         imageView.image = .init()
-              imageView.layoutIfNeeded()
-              let processor = DownsamplingImageProcessor(size: imageView.bounds.size)
+        imageView.layoutIfNeeded()
+        let processor = DownsamplingImageProcessor(size: imageView.bounds.size)
                            |> RoundCornerImageProcessor(cornerRadius: 20)
+        let resource = ImageResource(downloadURL: URL(string: heroData.imageLink) ?? URL(string: "http://127.0.0.1")!, cacheKey: "\(heroData.heroId)")
               imageView.kf.setImage(
-                  with: heroData.imageLink ?? URL.init(string: ""),
+                with: resource,
+                           placeholder: UIImage(named: ""),
                   options: [
-                      .processor(processor)
+                    .processor(processor),
+                    .cacheOriginalImage
                   ]
               ) {
                   switch $0 {
@@ -56,8 +59,10 @@ class CollectionViewCell: UICollectionViewCell{
     func layoutOption(){
         addSubview(imageView)
         addSubview(mainText)
-        mainText.snp.makeConstraints{ $0.left.equalTo(self.snp.left).offset(30)
+        mainText.snp.makeConstraints{
+            $0.left.equalTo(self.snp.left).offset(30)
             $0.top.equalTo(self.snp.bottom).offset(-70)
+            $0.right.equalTo(self.snp.right).offset(-10)
         }
 
         imageView.snp.makeConstraints{

@@ -2,7 +2,8 @@ import UIKit
 import SnapKit
 import Alamofire
 import Kingfisher
-
+import RealmSwift
+import Realm
 extension UIImage {
     var averageColor: UIColor? {
         guard let inputImage = CIImage(image: self) else { return nil }
@@ -22,12 +23,29 @@ extension UIImage {
 }
 
 final class ViewController: UIViewController {
-    private var offset: Int = 0
+    private var offset: Int = 0 {
+        willSet { NSLog("\nNew offset = \(newValue)\n") }
+    }
+    private var isFetchingData = false
     private let backgroundView = BackgroundView(frame: .zero)
     private var currentSelectedItemIndex = 0
     private var fullScreenTransitionManager: FullScreenTransitionManager?
     
     private let fullScreenImageViewController = FullScreenImageViewController()
+    
+    
+    private lazy var mainScrollView: UIScrollView = {
+        let mainScrollView = UIScrollView()
+        let refreshControl = UIRefreshControl()
+        refreshControl.attributedTitle = NSAttributedString(string: "Reloading data")
+        refreshControl.addTarget(self, action: #selector(self.refresh), for: .valueChanged)
+        mainScrollView.refreshControl = refreshControl
+        mainScrollView.showsVerticalScrollIndicator = false
+        mainScrollView.showsHorizontalScrollIndicator = false
+        return mainScrollView
+    }()
+    
+    private let contentView = UIView()
     
     private let marvelLogo: UIImageView = {
         let logo = UIImageView()
@@ -44,7 +62,7 @@ final class ViewController: UIViewController {
         headerText.translatesAutoresizingMaskIntoConstraints = false
         return headerText
     }()
-
+    
     private lazy var collectionView: UICollectionView = {
         let layout = PagingCollectionViewLayout()
         layout.itemSize = Constants.collectionViewLayoutItemSize
@@ -55,37 +73,91 @@ final class ViewController: UIViewController {
         collectionView.decelerationRate = .fast
         collectionView.backgroundColor = .none
         collectionView.showsHorizontalScrollIndicator = false
+        collectionView.showsVerticalScrollIndicator = false
+        collectionView.alwaysBounceVertical = false
         collectionView.dataSource = self
         collectionView.delegate = self
         return collectionView
     }()
-    private lazy var heroArray = [HeroModel]() {
-           didSet {collectionView.reloadData()}
-       }
+    let realm = try? Realm()
+    
+    private lazy var heroArray: [HeroModel?] = [] {
+        willSet {
+            try? realm?.write { realm?.add(newValue.compactMap { $0 }, update: .modified) }
+        }
+        didSet {
+            collectionView.reloadData()
+        }
+    }
 
-       private lazy var getMoreHero: () -> Void = {
-           getHero(offset: self.offset) { [weak self] in
-               self?.heroArray.append(contentsOf: $0)
-               self?.offset += $0.count
-           }
-       }
+
+    private lazy var getMoreHeroes: () -> Void = {
+            let workItem = DispatchWorkItem {
+                getHeroes(offset: self.offset) { [weak self] result in
+                    guard let self = self else { return }
+                    switch result {
+                    case .success(let heroModelArray):
+                        if  self.heroArray.count > 0 {
+                            self.heroArray.remove(at: self.heroArray.count - 1)
+                        }
+                        self.heroArray.append(contentsOf: heroModelArray)
+                        self.heroArray.append(nil)
+                        self.offset += heroModelArray.count
+                    case .failure(let error):
+                        self.heroArray = {
+                            guard let results = self.realm?.objects(HeroModel.self) else { return [] }
+                            return Array(results)
+                        }()
+                    }
+                }
+            }
+            workItem.notify(queue: .main) { [weak self] in
+                self?.isFetchingData = false
+            }
+            if !self.isFetchingData {
+                self.isFetchingData = true
+                DispatchQueue.main.async(execute: workItem)
+            }
+        }
 
     override func viewDidLoad() {
         super.viewDidLoad()
         navigationController?.navigationBar.tintColor = .white
-        view.addSubview(backgroundView)
-        view.addSubview(marvelLogo)
-        view.addSubview(headerText)
+        getMoreHeroes()
+        view.addSubview(mainScrollView)
+        mainScrollView.addSubview(contentView)
+        contentView.addSubview(backgroundView)
+        contentView.addSubview(marvelLogo)
+        contentView.addSubview(headerText)
         registerCollectionViewCells()
         view.addSubview(collectionView)
         backgroundView.setTriangleColor(.white)
+        mainScrollView.contentInsetAdjustmentBehavior = .never
+        mainScrollView.alwaysBounceHorizontal = false
+        mainScrollView.alwaysBounceVertical = true
         setLayout()
     }
-
-    private func setLayout() {
-        backgroundView.snp.makeConstraints { make in
-            make.edges.equalTo(view.snp.edges)
+    @objc func refresh() {
+            offset = 0
+            heroArray.removeAll(keepingCapacity: true)
+            DispatchQueue.global().async { [weak self] in
+                self?.getMoreHeroes()
+                DispatchQueue.main.async { [weak self] in
+                    self?.collectionView.reloadData()
+                    self?.mainScrollView.refreshControl?.endRefreshing()
+                }
+            }
         }
+    private func setLayout() {
+        mainScrollView.snp.makeConstraints { $0.edges.equalTo(view.snp.edges)
+              }
+        contentView.snp.makeConstraints{
+        $0.edges.equalToSuperview()
+                  $0.height.equalToSuperview()
+                  $0.width.equalToSuperview()
+              }
+              backgroundView.snp.makeConstraints { $0.edges.equalTo(contentView.snp.edges)
+              }
         marvelLogo.snp.makeConstraints { $0.centerX.equalTo(view.snp.centerX)
             $0.top.equalTo(view).offset(70.0)
             $0.size.equalTo(CGSize(width: 140, height: 30))
@@ -110,7 +182,6 @@ final class ViewController: UIViewController {
 extension ViewController: UICollectionViewDelegateFlowLayout, UICollectionViewDataSource {
 
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        if heroArray.isEmpty { getMoreHero() }
                 return heroArray.count
     }
 
@@ -138,7 +209,7 @@ extension ViewController: UICollectionViewDelegateFlowLayout, UICollectionViewDa
     }
     func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
         if indexPath.row == heroArray.count - 1 {
-            getMoreHero()
+            getMoreHeroes()
         }
     }
 
@@ -149,10 +220,15 @@ extension ViewController: UICollectionViewDelegateFlowLayout, UICollectionViewDa
         if let indexPath = collectionView.indexPathForItem(at: centerPoint) {
             currentSelectedItemIndex = indexPath.row
             let cache = ImageCache.default
-                        cache.retrieveImage(forKey: "\(heroArray[indexPath.row].heroId)") { result in
+            cache.retrieveImage(forKey: "\(heroArray[indexPath.row]?.heroId ?? 0)") { result in
                             switch result {
                             case .success(let value):
-                                self.backgroundView.setTriangleColor(value.image?.averageColor ?? .clear)
+                                DispatchQueue.global(qos: .background).async {
+                                    let color = value.image?.averageColor ?? .clear
+                                    DispatchQueue.main.async {
+                                        self.backgroundView.setTriangleColor(color)
+                                    }
+                                }
                             case .failure(let error):
                                 print("Error: \(error)")
                             }

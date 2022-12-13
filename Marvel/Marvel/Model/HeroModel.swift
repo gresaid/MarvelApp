@@ -2,19 +2,21 @@ import UIKit
 import SwiftyJSON
 import Alamofire
 import CryptoKit
+import RealmSwift
 
 public let baseUrl = "https://gateway.marvel.com/v1/public/characters"
 
 
-struct HeroModel{
-    let name: String
-    let description: String
-    let imageLink: String
-    let heroId: Int
-       init(id: Int, name: String, imagelink: String, description: String) {
+final class HeroModel: Object{
+   @Persisted var name: String
+    @Persisted var heroDescription: String
+    @Persisted var  imageLink: String
+    @Persisted(primaryKey: true) var  heroId: Int
+       convenience init(id: Int, name: String, imagelink: String, description: String) {
+           self.init()
            self.heroId = id
            self.name = name
-           self.description = description
+           self.heroDescription = description
            if imagelink.hasSuffix("jpg") {
                self.imageLink = imagelink
            } else {
@@ -22,29 +24,46 @@ struct HeroModel{
            }
        }
    }
-
-   func getHero(id: Int = -1, offset: Int = 0, _ completion: @escaping ([HeroModel]) -> Void) {
-       AF.request(
-           baseUrl + (id == -1 ? "" : "/\(id)"),
-           parameters: requestParams(offset: offset)
-       ).responseDecodable(of: HeroPayload.self) { response in
-           switch response.result {
-           case .success(let heroPayload):
-               let heroDecodable = heroPayload.data?.results
-               var heroModelArray: [HeroModel] = []
-               for hero in heroDecodable! {
-                   let newModel = HeroModel(id: hero?.id ?? -1, name: hero?.name ?? "",
-                                                 imagelink: hero?.thumbnail?.imageUrlString ?? "",
-                                                 description: hero?.description ?? "")
-                   heroModelArray.append(newModel)
-               }
-               completion(heroModelArray)
-           case .failure(let failure):
-               NSLog(failure.localizedDescription)
-           }
-       }
-   }
-
+func getHeroes(offset: Int = 0, _ completion: @escaping (Result<[HeroModel], Error>) -> Void) {
+    AF.request(
+       
+        baseUrl,
+        parameters: requestParams(offset: offset)
+    ).responseDecodable(of: HeroPayload.self) { response in
+        switch response.result {
+        case .success(let heroPayload):
+            let heroDecodable = heroPayload.data?.results
+            var heroModelArray: [HeroModel] = []
+            heroDecodable?.forEach { heroModelArray.append(createHeroFromDecodable(hero: $0)) }
+            completion(.success(heroModelArray))
+        case .failure(let failure):
+            NSLog(failure.localizedDescription)
+            completion(.failure(failure))
+        }
+    }
+}
+func getHero(id: Int, _ completion: @escaping (Result<HeroModel, Error>) -> Void) {
+    AF.request(
+        baseUrl + "/\(id)",
+        parameters: requestParams()
+    ).responseDecodable(of: HeroPayload.self) { response in
+        switch response.result {
+        case .success(let heroesPayload):
+            let heroDecodable = heroesPayload.data?.results
+            var heroModelArray: [HeroModel] = []
+            heroDecodable?.forEach { heroModelArray.append(createHeroFromDecodable(hero: $0)) }
+            completion(.success(heroModelArray.first ?? .init()))
+        case .failure(let failure):
+            NSLog(failure.localizedDescription)
+            completion(.failure(failure))
+        }
+    }
+}
+func createHeroFromDecodable(hero: HeroDecodable?) -> HeroModel {
+    return HeroModel(id: hero?.id ?? -1, name: hero?.name ?? "",
+                          imagelink: hero?.thumbnail?.imageUrlString ?? "",
+                          description: hero?.description ?? "")
+}
    struct HeroPayload: Decodable {
        let data: HeroListDecodable?
    }

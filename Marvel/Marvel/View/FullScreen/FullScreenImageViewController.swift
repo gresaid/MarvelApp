@@ -46,15 +46,21 @@ class FullScreenImageViewController: UIViewController {
         fatalError("init(coder:) has not been implemented")
     }
     
-    func setup(heroData: HeroModel, tag: Int) {
+    func setup(heroData: HeroModel?, tag: Int) {
         heroImageView.image = .init()
         wrapperView.tag = tag
-        getHero(id: heroData.heroId) { [weak self] in
-                   self?.heroImageView.kf.setImage(with: URL(string: $0.first?.imageLink ?? "") ?? URL(string: "http://127.0.0.1"))
-                   self?.heroNameTextLabel.text = $0.first?.name
-                   self?.heroDescriptionTextLabel.text = $0.first?.description
-               }
+        guard let data = heroData else { return }
+        getHero(id: data.heroId) { [weak self] result in
+            switch result {
+            case .success(let heroModel):
+                self?.heroImageView.kf.setImage(with: URL(string: heroModel.imageLink) ?? URL(string: "http://127.0.0.1"))
+                self?.heroNameTextLabel.text = heroModel.name
+                self?.heroDescriptionTextLabel.text = heroModel.heroDescription
+            case .failure(let error):
+                NSLog(error.localizedDescription)
             }
+        }
+    }
         
 
 

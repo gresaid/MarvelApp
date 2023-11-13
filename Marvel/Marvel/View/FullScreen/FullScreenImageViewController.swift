@@ -13,26 +13,28 @@ class FullScreenImageViewController: UIViewController {
     
     private let heroImageView: UIImageView = {
         let imageView = UIImageView()
-        imageView.contentMode = .scaleToFill
+        imageView.contentMode = .scaleAspectFill
         imageView.clipsToBounds = true
         return imageView
     }()
     
     private let heroNameTextLabel: UILabel = {
         let heroNameTextLabel = UILabel()
-        heroNameTextLabel.textColor = .black
-        heroNameTextLabel.shadowColor = .white
-        heroNameTextLabel.shadowOffset = CGSize(width: 2, height: 2)
+        heroNameTextLabel.font = UIFont.boldSystemFont(ofSize: 17)
+        heroNameTextLabel.textColor = .white
+        heroNameTextLabel.shadowColor = .black
+        heroNameTextLabel.shadowOffset = CGSize(width: 1, height: 1)
         return heroNameTextLabel
     }()
     
     private let heroDescriptionTextLabel: UILabel = {
         let heroDescriptionTextLabel = UILabel()
-        heroDescriptionTextLabel.textColor = .black
+        heroDescriptionTextLabel.font = UIFont.boldSystemFont(ofSize: 15)
+        heroDescriptionTextLabel.textColor = .white
         heroDescriptionTextLabel.lineBreakMode = .byWordWrapping
         heroDescriptionTextLabel.numberOfLines = 0
-        heroDescriptionTextLabel.shadowColor = .white
-        heroDescriptionTextLabel.shadowOffset = CGSize(width: 2, height: 2)
+        heroDescriptionTextLabel.shadowColor = .black
+        heroDescriptionTextLabel.shadowOffset = CGSize(width: 1, height: 1)
         return heroDescriptionTextLabel
     }()
     
@@ -44,13 +46,21 @@ class FullScreenImageViewController: UIViewController {
         fatalError("init(coder:) has not been implemented")
     }
     
-    func setup(heroData: HeroModel, tag: Int) {
+    func setup(heroData: HeroModel?, tag: Int) {
         heroImageView.image = .init()
         wrapperView.tag = tag
-        heroImageView.kf.setImage(with: heroData.imageLink ?? URL(string: ""))
-        heroNameTextLabel.text = heroData.name
-        heroDescriptionTextLabel.text = "asdsadsa"
+        guard let data = heroData else { return }
+        getHero(id: data.heroId) { [weak self] result in
+            switch result {
+            case .success(let heroModel):
+                self?.heroImageView.kf.setImage(with: URL(string: heroModel.imageLink) ?? URL(string: "http://127.0.0.1"))
+                self?.heroNameTextLabel.text = heroModel.name
+                self?.heroDescriptionTextLabel.text = heroModel.heroDescription
+            case .failure(let error):
+                NSLog(error.localizedDescription)
             }
+        }
+    }
         
 
 
